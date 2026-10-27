@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import manuscript from '../src/data/manuscript.json';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
  const routes = [{href:'/',heading:'가장 먼항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
@@ -21,17 +22,32 @@ test('all fifteen readings, contents dialog, boundaries, font controls and brows
  await expect(page.getByRole('button',{name:'← 이전 낭독'})).toBeDisabled();
  for(let i=1;i<=15;i++){
   await expect(page.locator('.reader-count')).toHaveText(`${i} / 15`);
-  await expect(page.getByText('원고 미제공',{exact:true})).toBeVisible();
+  const expected=manuscript.readings[i-1];
+  const rendered=await page.locator('.reading-body [data-source-block]').allTextContents();
+  expect(JSON.stringify(rendered)===JSON.stringify(expected.blocks.map(b=>b.text)),`Reading ${i}: all source blocks must match without rewriting`).toBe(true);
+  await expect(page.locator('.missing-manuscript')).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  if(expected.date) await expect(page.locator('.letter-date')).toHaveText(expected.date);
+  if(i===7) await expect(page.locator('.inline-letter-date')).toHaveText('10월 20일');
+  if(i===8) await expect(page.locator('.inline-letter-date')).toHaveText('1772년 2월 17일');
+  if(i===10) await expect(page.locator('.inline-letter-date')).toHaveText('9월 6일');
+  await expect(page.locator('.reading-paper img,.reading-paper svg,.reading-paper canvas')).toHaveCount(0);
   if(i<15)await page.getByRole('button',{name:'다음 낭독 →'}).click();
  }
  await expect(page.getByRole('button',{name:'다음 낭독 →'})).toBeDisabled();
- await expect(page.getByText('열다섯 번째 낭독에는 김지후 낭독과 사회자 낭독이 함께 포함됩니다.',{exact:false})).toBeVisible();
+ await expect(page.locator('.speaker-heading').first()).toHaveText('김지후 낭독');
+ await expect(page.locator('.narrator-heading')).toHaveText('[사회자]');
+ await expect(page.locator('.narrator-heading')).toHaveCSS('border-top-width','1px');
+ await expect(page.locator('.reading-paper')).toHaveCSS('background-color','rgb(244, 232, 211)');
+ await expect(page.locator('.reading-paper')).toHaveCSS('background-image','none');
  await page.getByRole('button',{name:'전체 목차',exact:false}).click();
  await expect(page.getByRole('dialog')).toBeVisible();
  await expect(page.getByRole('dialog').locator('ol li')).toHaveCount(15);
  await page.getByRole('dialog').getByRole('button',{name:'07 일곱 번째 낭독',exact:false}).click();
  await expect(page.locator('.reader-count')).toHaveText('7 / 15');
  await expect(page).toHaveURL(/reading=7/);
+ await page.goBack(); await expect(page.locator('.reader-count')).toHaveText('15 / 15');
+ await page.goForward(); await expect(page.locator('.reader-count')).toHaveText('7 / 15');
  await page.getByRole('button',{name:'글자 크게',exact:true}).click();
  await expect(page.locator('.reading-paper')).toHaveCSS('font-size','20px');
  await page.reload(); await expect(page.locator('.reader-count')).toHaveText('7 / 15');
