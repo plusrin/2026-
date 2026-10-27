@@ -13,3 +13,72 @@
 .reading-body .speaker-heading{font-family:var(--font-reading);font-weight:700;font-size:1.05em}
 .reading-body .narrator-heading{border-top:1px solid #27333d30;padding-top:1.8em;margin-top:2.5em}
 .inline-letter-date{font-weight:700}
+
+/* Shared voyage cover and always-visible five-page navigation. */
+body{background:#fcfbf8;color:var(--ink)}
+html{scroll-padding-top:24px}
+.voyage-header{background:#1b2d3b;color:#eee5d1}
+.voyage-masthead{max-width:960px;margin:auto;padding:24px 32px 28px}
+.voyage-wordmark{display:inline-block;font-size:12px;letter-spacing:.07em;color:#d9cdb0;margin-bottom:20px;min-height:24px}
+.voyage-sea{height:340px;overflow:hidden;border-radius:18px;border:1px solid #d8bd8d26}
+.voyage-sea .art-placeholder{height:100%;background:radial-gradient(ellipse at 78% 20%,#b6c4c936,transparent 30%),linear-gradient(#172c37 0%,#304955 49%,#163642 50%,#102b36 100%)}
+.voyage-sea .moon{width:36px;height:36px;left:auto;right:18%;top:17%}
+.voyage-sea .art-placeholder:after{left:53%;right:10%;top:50%}
+.voyage-sea .sea-lines{top:50%}
+.voyage-sea.has-image{height:auto;aspect-ratio:auto}
+.voyage-sea img{width:100%;height:auto;object-fit:contain}
+.voyage-title{margin-top:20px;font-size:32px;line-height:1.45;font-weight:600;letter-spacing:-.04em}
+.voyage-title h1,.voyage-title>a{font:inherit}
+.voyage-subtitle{margin-top:12px;font-size:22px;line-height:1.6;letter-spacing:-.03em}
+.voyage-description{margin-top:14px;font-size:13px;color:#b1bec5}
+.voyage-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:960px;margin:auto;padding:16px 24px;background:#fcfbf8;color:#777c7e}
+.voyage-header{background:linear-gradient(to bottom,#1b2d3b calc(100% - 76px),#fcfbf8 0)}
+.voyage-tabs a{display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;white-space:nowrap;border-radius:28px}
+.voyage-tabs a[aria-current]{background:#eeede9;color:#1c2f3d;font-weight:700}
+.voyage-tabs a:hover{background:#f0eee7;color:#1c2f3d}
+main{--gold:#746246;--muted:#63717b;--line:rgba(86,78,59,.2)}
+.home{padding-top:0;background:#fcfbf8}
+.home-event{padding-top:22px;padding-bottom:36px;border-bottom:1px solid var(--line)}
+.home-event h2{font-size:28px;margin-top:12px}
+.event-theme{font-size:13px;color:var(--muted);margin-top:12px}
+.hero-facts{color:var(--ink)}
+.button.primary{background:#243b49;border-color:#243b49;color:#f4e8d3}
+.button.primary:hover{background:#385465}
+.book-panel,.test-card,.poster-card{background:#f3f0e7}
+.book-panel p:not(.eyebrow),.test-card p:not(.eyebrow),.next-activities p{color:var(--muted)}
+.song-panel{background:#f3f0e7}
+.page-shell{padding:10px 32px 70px;min-height:40vh;background:#fcfbf8}
+.page-intro{text-align:left;padding:12px 0 28px}
+.page-intro h1{font-family:var(--font-ui);font-size:30px;font-weight:600;letter-spacing:-.04em;margin:8px 0 12px}
+.page-description{font-size:14px}
+.intro-rule{display:none}
+.reader{scroll-margin-top:24px}
+.reading-paper{box-shadow:none;border-radius:12px;background:var(--ivory);background-image:none}
+.site-footer{color:#67747b;--line:rgba(86,78,59,.2)}
+.footer-mark{color:#746246}
+@media(max-width:700px){
+ .voyage-masthead{padding:15px 24px 22px}
+ .voyage-wordmark{font-size:11px;margin-bottom:14px}
+ .voyage-sea{height:auto;aspect-ratio:16/9;border-radius:16px}
+ .voyage-sea .moon{height:25px;width:25px;right:15%;top:14%}
+ .voyage-title{font-size:26px;margin-top:16px}
+ .voyage-subtitle{font-size:20px;margin-top:12px}
+ .voyage-description{font-size:12px;margin-top:13px;letter-spacing:-.035em}
+ .voyage-tabs{padding:14px 16px;gap:3px}
+ .voyage-tabs a{font-size:13px}
+ .voyage-header{background:linear-gradient(to bottom,#1b2d3b calc(100% - 72px),#fcfbf8 0)}
+ .home-event{padding-top:12px;padding-bottom:28px}
+ .home-event h2{font-size:23px}
+ .hero-facts{font-size:12px;line-height:1.9}
+ .hero-facts span{margin-right:10px}
+ .hero-facts p{display:flex;gap:4px}
+ .hero-facts span{flex-shrink:0}
+ .page-shell{padding:0 24px 40px}
+ .page-intro{padding:12px 0 24px}
+ .page-intro h1{font-size:25px}
+ .page-intro .eyebrow{font-size:9px}
+ .page-description{font-size:13px}
+ .reading-paper{padding:30px 22px 40px}
+ .reader-toolbar .button{padding:10px;font-size:11px}
+}
+.modal{--gold:#d8bd8d;--muted:#b5c0c8;--line:rgba(216,189,141,.22)}

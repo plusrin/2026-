@@ -2,13 +2,18 @@ import { test, expect } from '@playwright/test';
 import manuscript from '../src/data/manuscript.json';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
- const routes = [{href:'/',heading:'가장 먼항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
+ const routes = [{href:'/',heading:'가장 먼 항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
  await page.goto('/');
+ await expect(page.getByRole('navigation').getByRole('link')).toHaveCount(5);
+ await expect(page.getByRole('link',{name:'THE VOYAGE 홈'})).toBeVisible();
+ const sea = await page.locator('.voyage-sea').boundingBox();
+ const title = await page.getByRole('heading',{level:1}).boundingBox();
+ expect(sea!.y + sea!.height).toBeLessThan(title!.y);
  await expect(page.getByText('2026년 11월 3일 화요일 저녁 7시',{exact:false})).toBeVisible();
  await expect(page.getByText('창원문성고등학교 2층 문성홀',{exact:false})).toBeVisible();
  for(const route of routes){
-  await page.getByRole('button',{name:'메뉴 열기',exact:true}).click();
   await page.getByRole('navigation').getByRole('link',{name:route.label,exact:true}).click();
+  await expect(page.getByRole('navigation').getByRole('link',{name:route.label,exact:true})).toHaveAttribute('aria-current','page');
   await expect(page).toHaveURL(new RegExp(route.href==='/'?'/$':route.href+'$'));
   await expect(page.getByRole('heading',{level:1})).toHaveText(route.heading);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
