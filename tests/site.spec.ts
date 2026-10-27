@@ -5,10 +5,21 @@ test('five menus, accurate event information, no horizontal overflow at 390px', 
  const routes = [{href:'/',heading:'가장 먼 항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
  await page.goto('/');
  await expect(page.getByRole('navigation').getByRole('link')).toHaveCount(5);
- await expect(page.getByRole('link',{name:'THE VOYAGE 홈'})).toBeVisible();
- const sea = await page.locator('.voyage-sea').boundingBox();
- const title = await page.getByRole('heading',{level:1}).boundingBox();
- expect(sea!.y + sea!.height).toBeLessThan(title!.y);
+ await expect(page.getByText('THE VOYAGE',{exact:true})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'낭독 원고 만나기',exact:false})).toHaveCount(0);
+ await expect(page.locator('.voyage-title')).toHaveText('가장 먼 항해');
+ await expect(page.locator('.voyage-sea img')).toHaveAttribute('src','/images/home/main-voyage.jpg');
+ const title=await page.locator('.voyage-title').boundingBox();
+ const art=await page.locator('.voyage-sea').boundingBox();
+ expect(title!.y).toBeLessThan(art!.y);
+ const image=page.locator('.voyage-sea img');
+ await expect(image).toHaveCSS('object-fit','contain');
+ expect(await image.evaluate((el:HTMLImageElement)=>el.complete&&el.naturalWidth>0)).toBe(true);
+ const tabs=page.getByRole('navigation');
+ const rectangles=await tabs.getByRole('link').evaluateAll(links=>links.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right};}));
+ expect(new Set(rectangles.map(r=>r.top)).size).toBe(1);
+ expect(rectangles.every(r=>r.left>=0&&r.right<=390)).toBe(true);
+ expect(await tabs.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await expect(page.getByText('2026년 11월 3일 화요일 저녁 7시',{exact:false})).toBeVisible();
  await expect(page.getByText('창원문성고등학교 2층 문성홀',{exact:false})).toBeVisible();
  for(const route of routes){
@@ -90,4 +101,29 @@ test('poster fixture: front/back, image flip, zoom, original link, focus and Esc
  await dialog.getByRole('button',{name:'포스터 축소',exact:true}).click();await expect(dialog.locator('.zoom-controls')).toContainText('100%');
  await dialog.getByRole('button',{name:'앞면',exact:true}).click();await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',frontSrc!);
  await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(card).toBeFocused();
+});
+
+test('uncropped artwork and single-row sea tabs across mobile and tablet sizes', async ({page}) => {
+ test.setTimeout(60000);
+ for (const width of [320, 360, 390, 430, 768]) {
+  await page.setViewportSize({width,height:844});
+  for (const route of ['/', '/schedule', '/readings', '/archive', '/next']) {
+   await page.goto(route);
+   const nav=page.getByRole('navigation',{name:'주 메뉴'});
+   await expect(nav.getByRole('link')).toHaveCount(5);
+   await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+   const boxes=await nav.getByRole('link').evaluateAll(links=>links.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right,width:r.width};}));
+   expect(new Set(boxes.map(r=>r.top)).size,`${width}px ${route}: tabs stay on one row`).toBe(1);
+   expect(boxes.every(r=>r.left>=0&&r.right<=width&&r.width>=40)).toBe(true);
+   expect(await nav.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${width}px ${route}: page fits`).toBe(true);
+   await expect(page.locator('.voyage-title')).toHaveText('가장 먼 항해');
+   await expect(page.locator('main')).toHaveCSS('background-color','rgb(8, 30, 45)');
+   await expect(page.locator('.voyage-sea img')).toHaveCSS('object-fit','contain');
+   if(width<=430){
+    const actualRatio=await page.locator('.voyage-sea img').evaluate((el:HTMLImageElement)=>el.getBoundingClientRect().width/el.getBoundingClientRect().height);
+    expect(Math.abs(actualRatio-1374/1145)).toBeLessThan(.01);
+   }
+  }
+ }
 });
