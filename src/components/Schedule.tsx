@@ -1,5 +1,42 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { schedule, siren } from '@/data/schedule';
-export function Schedule(){const [expanded,setExpanded]=useState(false);const [lang,setLang]=useState<'english'|'korean'>('english');return <div className="schedule-list">{schedule.map((item,i)=><section className="schedule-item" key={item.title}><span className="schedule-number">{String(i+1).padStart(2,'0')}</span><div className="schedule-content"><h2>{item.title}</h2>{item.song&&<button className="song-trigger" aria-expanded={expanded} aria-controls="siren-text" onClick={()=>setExpanded(!expanded)}>{item.song}<span>{expanded?'−':'+'}</span></button>}{item.detail&&<p>{item.detail}</p>}{item.song&&expanded&&<div className="song-panel" id="siren-text"><div className="segmented" aria-label="세이렌의 노래 언어">{(['english','korean'] as const).map(l=><button key={l} aria-pressed={lang===l} onClick={()=>setLang(l)}>{l==='english'?'English':'한국어 해석'}</button>)}</div><p className="preserve">{siren[lang]??`${lang==='english'?'영어 원문':'한국어 해석'}은 아직 제공되지 않았습니다. 실제 텍스트를 받은 후 공개합니다.`}</p></div>}{i===3&&<Link href="/readings" className="text-link">낭독 원고 보기 ↗</Link>}</div></section>)}<p className="quiet-note">세부 진행 시간은 확정 후 안내합니다.</p></div>}
+
+export function Schedule() {
+  const [expanded, setExpanded] = useState(false);
+  const [lang, setLang] = useState<'english' | 'korean'>('english');
+  return (
+    <div className="schedule-list">
+      {schedule.map((item, index) => (
+        <section className="schedule-item" key={item.title}>
+          <span className="schedule-number">{String(index + 1).padStart(2, '0')}</span>
+          <div className="schedule-content">
+            <h2>{item.title}</h2>
+            {item.song && (
+              <div className="song-heading">
+                <span className="song-title">{item.song}</span>
+                <button className="schedule-action" aria-expanded={expanded} aria-controls="siren-text" onClick={() => setExpanded(!expanded)}>
+                  {expanded ? '원문 닫기' : '원문 보기'}
+                </button>
+              </div>
+            )}
+            {item.detail && <p>{item.detail}</p>}
+            {item.song && expanded && (
+              <div className="song-panel" id="siren-text">
+                <div className="segmented" aria-label="세이렌의 노래 언어">
+                  {(['english', 'korean'] as const).map(language => (
+                    <button key={language} aria-pressed={lang === language} onClick={() => setLang(language)}>{language === 'english' ? 'English' : '한국어 해석'}</button>
+                  ))}
+                </div>
+                <p className="preserve">{siren[lang] ?? `${lang === 'english' ? '영어 원문' : '한국어 해석'}은 아직 제공되지 않았습니다. 실제 텍스트를 받은 후 공개합니다.`}</p>
+              </div>
+            )}
+            {index === 3 && <Link href="/readings" className="schedule-action reading-action">낭독 원고 보기</Link>}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}

@@ -55,7 +55,7 @@ export function Reader() {
         <header>
           <p className="paper-eyebrow">젊은 베르테르의 슬픔</p>
           <h2 id="reading-heading" tabIndex={-1}>{reading.title}</h2>
-          <p className="reader-name">{reading.reader}<span>{reading.className ?? '학반 정보 미제공'}</span></p>
+          <p className="reader-name">{reading.className} {reading.reader}</p>
         </header>
         {reading.date && <h3 className="letter-date">{reading.date}</h3>}
         {reading.blocks ? (
@@ -86,8 +86,12 @@ export function Reader() {
             <li key={entry.id}>
               <button aria-current={entryIndex === index ? 'true' : undefined} onClick={() => go(entryIndex)}>
                 <span className="toc-number">{String(entry.id).padStart(2, '0')}</span>
-                <span><strong>{entry.title}</strong><small>{entry.reader}{entry.date && ` · ${entry.date}`}</small></span>
-                {entryIndex === index && <span aria-label="현재 낭독">●</span>}
+                <span className="toc-details">
+                  <span className="toc-title-line"><strong>{entry.title}</strong>{entry.date && <span className="toc-date">{entry.date}</span>}</span>
+                  <span className="toc-summary">{entry.summary}</span>
+                  <span className="toc-student">{entry.className} {entry.reader}</span>
+                </span>
+                {entryIndex === index && <span className="toc-current" aria-label="현재 낭독">●</span>}
               </button>
             </li>
           ))}</ol>

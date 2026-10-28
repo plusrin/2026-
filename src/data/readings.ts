@@ -1,4 +1,5 @@
 import manuscript from './manuscript.json';
+import { readingDetails } from './readingDetails';
 
 export type ReadingBlock = {
   type: 'paragraph' | 'date' | 'heading';
@@ -9,7 +10,8 @@ export type Reading = {
   id: number;
   title: string;
   reader: string;
-  className: string | null;
+  className: string;
+  summary: string;
   date: string | null;
   blocks: ReadingBlock[] | null;
 };
@@ -20,7 +22,8 @@ export const readings: Reading[] = manuscript.readings.map((reading, index) => (
   id: reading.id,
   title: `${ordinals[index]} 낭독`,
   reader: reading.reader,
-  className: null,
+  className: readingDetails[index].className,
+  summary: readingDetails[index].summary,
   date: reading.date,
   blocks: reading.blocks.map(block => ({
     ...block,

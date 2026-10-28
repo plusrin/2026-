@@ -275,3 +275,36 @@ body { background: var(--deep); color: var(--ivory); }
      text its own space below the illustration rather than covering figures. */
   .hero-event { margin-top: 0; min-height: 0; padding-block: 12px 28px; }
 }
+
+/* Local content controls; the approved landscape, hero and page geometry stay intact. */
+.song-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px; }
+.song-title { color: var(--gold); font-size: 14px; }
+.schedule-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #d8bd8d08;
+  color: var(--ivory);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+.schedule-action:hover { background: #d8bd8d18; }
+.reading-action { margin-top: 12px; }
+.toc-list button { align-items: flex-start; padding-block: 17px; }
+.toc-number { flex: 0 0 26px; padding-top: 1px; }
+.toc-details { display: block; flex: 1; min-width: 0; }
+.toc-title-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 12px; }
+.toc-date { color: var(--muted); font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+.toc-summary { display: block; margin-top: 7px; color: #b8c5ce; font-size: 12px; line-height: 1.9; word-break: keep-all; overflow-wrap: break-word; }
+.toc-student { display: block; margin-top: 7px; color: var(--ivory); font-size: 12px; line-height: 1.8; }
+.toc-list button > .toc-details { color: inherit; margin-left: 0; }
+.toc-list button > .toc-current { flex: 0 0 9px; padding-top: 4px; font-size: 10px; }
+.book-cover { flex: 0 0 108px; width: 108px; height: auto; object-fit: contain; align-self: center; }
+@media (max-width: 700px) {
+  .book-cover { flex-basis: 90px; width: 90px; }
+}

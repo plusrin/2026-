@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import manuscript from '../src/data/manuscript.json';
+import { readingDetails } from '../src/data/readingDetails';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
  const routes = [{href:'/',heading:'가장 먼 항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
@@ -7,6 +8,8 @@ test('five menus, accurate event information, no horizontal overflow at 390px', 
  await expect(page.getByRole('navigation').getByRole('link')).toHaveCount(5);
  await expect(page.getByText('THE VOYAGE',{exact:true})).toHaveCount(0);
  await expect(page.getByRole('link',{name:'낭독 원고 만나기',exact:false})).toHaveCount(0);
+ await expect(page.locator('.book-icon')).toHaveCount(0);
+ await expect(page.locator('.book-panel h3')).toHaveText('《젊은 베르테르의 슬픔》');
  await expect(page.locator('.voyage-title')).toHaveText('가장 먼 항해');
  await expect(page.locator('.voyage-sea img')).toHaveAttribute('src','/images/home/main-voyage.jpg');
  const title=await page.locator('.voyage-title').boundingBox();
@@ -51,6 +54,9 @@ test('all fifteen readings, contents dialog, boundaries, font controls and brows
   const rendered=await page.locator('.reading-body [data-source-block]').allTextContents();
   expect(JSON.stringify(rendered)===JSON.stringify(expected.blocks.map(b=>b.text)),`Reading ${i}: all source blocks must match without rewriting`).toBe(true);
   await expect(page.locator('.missing-manuscript')).toHaveCount(0);
+  await expect(page.locator('.reader-name')).toHaveText(`${readingDetails[i-1].className} ${expected.reader}`);
+  await expect(page.getByText('학반 정보 미제공',{exact:true})).toHaveCount(0);
+  expect(await page.locator('.reading-body').textContent()).not.toContain(readingDetails[i-1].summary);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   if(expected.date) await expect(page.locator('.letter-date')).toHaveText(expected.date);
   if(i===7) await expect(page.locator('.inline-letter-date')).toHaveText('10월 20일');
@@ -82,10 +88,16 @@ test('all fifteen readings, contents dialog, boundaries, font controls and brows
 });
 
 test('siren languages and honest missing text, external test link and empty exhibitions',async({page})=>{
- await page.goto('/schedule');await page.getByRole('button',{name:'세이렌의 노래',exact:false}).click();
+ await page.goto('/schedule');await page.getByRole('button',{name:'원문 보기',exact:true}).click();
  await expect(page.getByText('영어 원문은 아직 제공되지 않았습니다.',{exact:false})).toBeVisible();
  await page.getByRole('button',{name:'한국어 해석',exact:true}).click();
  await expect(page.getByText('한국어 해석은 아직 제공되지 않았습니다.',{exact:false})).toBeVisible();
+ await page.getByRole('button',{name:'원문 닫기',exact:true}).click();
+ await expect(page.locator('#siren-text')).toHaveCount(0);
+ await expect(page.getByText('세부 진행 시간은 확정 후 안내합니다.',{exact:true})).toHaveCount(0);
+ const readingLink=page.getByRole('link',{name:'낭독 원고 보기',exact:true});
+ await expect(readingLink).toHaveAttribute('href','/readings');
+ await readingLink.click(); await expect(page).toHaveURL(/\/readings$/);
  await page.goto('/archive');const link=page.getByRole('link',{name:'심리테스트 체험하기',exact:false});
  await expect(link).toHaveAttribute('href','https://cognitive-error.vercel.app/');await expect(link).toHaveAttribute('rel','noopener noreferrer');
  await expect(page.locator('.empty-gallery')).toHaveCount(2);await expect(page.locator('.poster-card')).toHaveCount(0);
@@ -152,4 +164,27 @@ test('generated sky and water paintings load without tiling and leave reading pa
  await expect(page.locator('.reading-paper')).toHaveCSS('background-color','rgb(244, 232, 211)');
  await expect(page.locator('.reading-paper')).toHaveCSS('background-image','none');
  await expect(page.locator('.reading-paper img,.reading-paper svg')).toHaveCount(0);
+});
+
+test('all contents entries retain source dates and show summary then class and name',async({page})=>{
+ await page.goto('/readings');await page.getByRole('button',{name:'전체 목차',exact:false}).click();
+ const dialog=page.getByRole('dialog');const items=dialog.locator('.toc-list li');
+ await expect(items).toHaveCount(15);
+ const expectedClasses=['1학년 4반','1학년 4반','1학년 2반','1학년 1반','1학년 2반','1학년 1반','1학년 2반','1학년 4반','1학년 4반','1학년 1반','1학년 4반','1학년 1반','1학년 4반','1학년 2반','1학년 1반'];
+ for(let i=0;i<15;i++){
+  const row=items.nth(i);
+  await expect(row.locator('.toc-summary')).toHaveText(readingDetails[i].summary);
+  await expect(row.locator('.toc-student')).toHaveText(`${expectedClasses[i]} ${manuscript.readings[i].reader}`);
+  if(manuscript.readings[i].date)await expect(row.locator('.toc-date')).toHaveText(manuscript.readings[i].date!);
+  else await expect(row.locator('.toc-date')).toHaveCount(0);
+ }
+ await items.nth(14).getByRole('button').click();
+ await expect(page.locator('.reader-count')).toHaveText('15 / 15');
+ await expect(page.locator('.reader-name')).toHaveText('1학년 1반 김지후');
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});
+  await page.getByRole('button',{name:'전체 목차',exact:false}).click();
+  expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.keyboard.press('Escape');
+ }
 });
