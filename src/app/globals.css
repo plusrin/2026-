@@ -338,7 +338,20 @@ body { background: var(--deep); color: var(--ivory); }
 .poster-card-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .poster-card-controls .button { flex: 1; padding: 10px 12px; font-size: 12px; }
 @keyframes poster-face-appear { from { opacity: .5; } to { opacity: 1; } }
-@media (max-width: 600px) { .gallery-grid.scene-gallery { grid-template-columns: minmax(0, 1fr); } }
+.poster-thumbnail-name { display: none; }
+.scene-poster-viewport[data-zoom="1"] img { max-height: 60vh; object-fit: contain; }
+@media (max-width: 600px) {
+  .gallery-grid.scene-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .scene-gallery .interactive-poster { padding: 0; background: transparent; border: 0; }
+  .scene-gallery .poster-card-heading,
+  .scene-gallery .poster-card-controls { display: none; }
+  .scene-gallery .poster-thumbnail { display: block; width: 100%; padding: 0; text-align: center; }
+  .scene-gallery .poster-thumbnail img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: contain; background: #102334; border: 1px solid var(--line); }
+  .poster-thumbnail-name { display: block; margin-top: 7px; font-family: var(--font-reading); font-size: 11px; color: var(--gold); }
+  .scene-poster-controls { margin: 12px 0; }
+  .scene-poster-controls + .quiet-note { margin: 12px auto; }
+  .scene-poster-viewport[data-zoom="1"] img { max-height: max(120px, calc(85dvh - 310px)); }
+}
 @media (prefers-reduced-motion: reduce) { .interactive-poster .poster-flip img { animation: none; } }
 
 /* Font-only fixes for UI text that otherwise inherits the sans-serif body font.

@@ -208,38 +208,76 @@ test('exact uploaded book cover loads uncropped at mobile and desktop sizes',asy
 
 test('five real scene posters: correct pairs, independent touch flips and both-side enlargement',async({page})=>{
  test.setTimeout(90000);
+ await page.setViewportSize({width:1440,height:900});
  await page.goto('/archive');
  const cards=page.locator('.scene-gallery .poster-card');await expect(cards).toHaveCount(5);
  for(let i=0;i<5;i++){
   const card=cards.nth(i),poster=scenePosters[i];
   await expect(card.locator('h3')).toHaveText(poster.title);await expect(card.locator('.poster-owner')).toHaveText(poster.student);
-  await expect(card.locator('img')).toHaveAttribute('src',poster.front);
-  await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();await expect(card.locator('img')).toHaveAttribute('src',poster.back);
-  for(let j=0;j<5;j++)if(i!==j)await expect(cards.nth(j).locator('img')).toHaveAttribute('src',scenePosters[j].front);
+  await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.front);
+  await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.back);
+  for(let j=0;j<5;j++)if(i!==j)await expect(cards.nth(j).locator('.poster-flip img')).toHaveAttribute('src',scenePosters[j].front);
   await card.getByRole('button',{name:/뒷면 확대 보기$/}).click();
   const dialog=page.getByRole('dialog');await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.back);
   await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.back);
   await dialog.getByRole('button',{name:'앞면',exact:true}).click();await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.front);
   await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.front);
   await dialog.getByRole('button',{name:'포스터 확대',exact:true}).click();await expect(dialog.locator('.zoom-controls')).toContainText('150%');
-  await page.keyboard.press('Escape');await expect(card.locator('img')).toHaveAttribute('src',poster.front);
-  await card.locator('.poster-flip').click();await expect(card.locator('img')).toHaveAttribute('src',poster.back);
-  await card.locator('.poster-flip').click();await expect(card.locator('img')).toHaveAttribute('src',poster.front);
+  await page.keyboard.press('Escape');await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.front);
+  await card.locator('.poster-flip').click();await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.back);
+  await card.locator('.poster-flip').click();await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.front);
  }
- for(const width of [390,1440]){
+ for(const width of [1440]){
   await page.setViewportSize({width,height:900});
-  expect(await page.locator('.scene-gallery').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(width===390?1:2);
+  expect(await page.locator('.scene-gallery').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2);
   for(let i=0;i<5;i++){
    const card=cards.nth(i);await card.scrollIntoViewIfNeeded();
    for(const side of ['front','back'] as const){
     if(side==='back')await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();
-    const size=await card.locator('img').evaluate(async(el:HTMLImageElement)=>{await el.decode();const r=el.getBoundingClientRect();return {width:r.width,height:r.height,naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight};});
+    const size=await card.locator('.poster-flip img').evaluate(async(el:HTMLImageElement)=>{await el.decode();const r=el.getBoundingClientRect();return {width:r.width,height:r.height,naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight};});
     expect(Math.abs(size.width/size.height-size.naturalWidth/size.naturalHeight)).toBeLessThan(.01);
-    await expect(card.locator('img')).toHaveCSS('object-fit','contain');
+    await expect(card.locator('.poster-flip img')).toHaveCSS('object-fit','contain');
    }
    await card.getByRole('button',{name:'앞면 보기',exact:true}).click();
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
  await expect(page.locator('.gallery-section').nth(1).locator('.empty-gallery')).toHaveCount(1);
+});
+
+test('mobile scene thumbnails: three columns, five front faces, modal flip, pan and focus return',async({page})=>{
+ for(const width of [320,390,430]){
+  await page.setViewportSize({width,height:844});
+  await page.goto('/archive');
+  const grid=page.locator('.scene-gallery'), thumbnails=grid.locator('.poster-thumbnail');
+  await expect(thumbnails).toHaveCount(5);
+  expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3);
+  await expect(grid.locator('.poster-card-controls').first()).toBeHidden();
+  const boxes=[];
+  for(let i=0;i<5;i++){
+   const thumb=thumbnails.nth(i),poster=scenePosters[i];
+   await expect(thumb.locator('span')).toHaveText(poster.student);
+   await expect(thumb.locator('img')).toHaveAttribute('src',poster.front);
+   await expect(thumb.locator('img')).toHaveCSS('object-fit','contain');
+   boxes.push(await thumb.evaluate(el=>el.getBoundingClientRect().top+window.scrollY));
+   await thumb.click();
+   const dialog=page.getByRole('dialog');
+   await expect(dialog).toHaveAccessibleName(poster.title);
+   await expect(dialog.locator('.poster-credit')).toContainText(poster.student);
+   await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.front);
+   await dialog.getByRole('button',{name:'뒷면',exact:true}).click();
+   await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.back);
+   for(let z=0;z<4;z++)await dialog.getByRole('button',{name:'포스터 확대',exact:true}).click();
+   const viewport=dialog.locator('.poster-viewport');
+   await viewport.locator('img').evaluate(async(el:HTMLImageElement)=>el.decode());
+   expect(await viewport.evaluate(el=>{el.scrollLeft=80;el.scrollTop=80;return el.scrollLeft>0&&el.scrollTop>0;})).toBe(true);
+   await dialog.getByRole('button',{name:'닫기',exact:true}).click();
+   await expect(thumb).toBeFocused();
+   await expect(thumb.locator('img')).toHaveAttribute('src',poster.front);
+  }
+  expect(boxes[0]).toBe(boxes[2]);
+  expect(boxes[3]).toBeGreaterThan(boxes[0]);
+  expect(boxes[3]).toBe(boxes[4]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
 });
