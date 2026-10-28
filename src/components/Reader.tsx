@@ -1,17 +1,26 @@
 'use client';
 
+import { FontIcon } from './FontIcon';
 import { Fragment, useEffect, useState } from 'react';
 import { readings, type ReadingBlock } from '@/data/readings';
 import { Modal } from './Modal';
+
+function SourceText({ text }: { text: string }) {
+  // U+2015 is absent from both uploaded faces. Keep the original character in
+  // the DOM (and copied text), drawing its bar without another font.
+  return text.split('―').map((part, index) => <Fragment key={index}>
+    {index > 0 && <span className="source-horizontal-bar"><span className="source-bar-text">―</span></span>}{part}
+  </Fragment>);
+}
 
 function BlockText({ block }: { block: ReadingBlock }) {
   let position = 0;
   const pieces = (block.dateEmphasis ?? []).map((range, index) => {
     const before = block.text.slice(position, range.start);
     position = range.end;
-    return <Fragment key={index}>{before}<strong className="inline-letter-date">{block.text.slice(range.start, range.end)}</strong></Fragment>;
+    return <Fragment key={index}><SourceText text={before} /><strong className="inline-letter-date"><SourceText text={block.text.slice(range.start, range.end)} /></strong></Fragment>;
   });
-  return <>{pieces}{block.text.slice(position)}</>;
+  return <>{pieces}<SourceText text={block.text.slice(position)} /></>;
 }
 
 export function Reader() {
@@ -44,10 +53,10 @@ export function Reader() {
   return (
     <div className="reader" id="reader-top">
       <div className="reader-toolbar">
-        <button className="button subtle" onClick={() => setToc(true)}><span aria-hidden="true">☷</span> 전체 목차</button>
+        <button className="button subtle" onClick={() => setToc(true)}><FontIcon kind="contents" /> 전체 목차</button>
         <span className="reader-count" aria-live="polite">{index + 1} / {readings.length}</span>
         <div className="font-controls" aria-label="원고 글자 크기">
-          <button aria-label="글자 작게" disabled={size <= 16} onClick={() => setSize(s => s - 2)}>가−</button>
+          <button aria-label="글자 작게" disabled={size <= 16} onClick={() => setSize(s => s - 2)}>가<FontIcon kind="minus" /></button>
           <button aria-label="글자 크게" disabled={size >= 26} onClick={() => setSize(s => s + 2)}>가+</button>
         </div>
       </div>

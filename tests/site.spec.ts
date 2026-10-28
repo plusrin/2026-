@@ -47,6 +47,25 @@ test('five menus, accurate event information, no horizontal overflow at 390px', 
  await expect(page.getByText('예상 최종 참여 학생',{exact:true})).toBeVisible();
 });
 
+test('home event information starts below the mobile viewport and remains reachable after scrolling',async({page})=>{
+ test.setTimeout(60000);
+ for(const width of [320,390,430])for(const height of [568,667,740,844,932,1100]){
+  await page.setViewportSize({width,height});await page.goto('/');await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  const firstScreen=await page.locator('.hero-event').evaluate(el=>({top:el.getBoundingClientRect().top,bottom:(window.visualViewport?.height??innerHeight)+(window.visualViewport?.offsetTop??0)}));
+  expect(firstScreen.top,`${width}x${height}: event below initial visual viewport`).toBeGreaterThanOrEqual(firstScreen.bottom);
+  await expect(page.locator('#hero-event-title')).not.toBeInViewport();
+  await expect(page.locator('.voyage-title')).toBeInViewport();
+  await expect(page.locator('.voyage-sea img')).toHaveCSS('object-fit','contain');
+  await page.locator('.hero-event').scrollIntoViewIfNeeded();
+  await expect(page.locator('#hero-event-title')).toBeInViewport();
+  await expect(page.locator('.hero-event')).toContainText('자기 중심성에서 벗어나기');
+  await expect(page.locator('.hero-event')).toContainText('2026년 11월 3일 화요일 저녁 7시');
+  await expect(page.locator('.hero-event')).toContainText('창원문성고등학교 2층 문성홀');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+});
+
 test('all fifteen readings, contents dialog, boundaries, font controls and browser history',async({page})=>{
  await page.goto('/readings');
  await expect(page.getByRole('button',{name:'← 이전 낭독'})).toBeDisabled();

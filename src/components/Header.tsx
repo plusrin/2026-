@@ -17,7 +17,8 @@ export function Header() {
   const path = usePathname();
   const title = event.title;
   return (
-    <header className="voyage-header">
+    <header className="voyage-header" data-home={path === '/' || undefined}>
+      <div className="voyage-visual">
       <div className="voyage-hero">
         <div className="voyage-hero-copy">
           <p className="voyage-event-heading">{event.heading}</p>
@@ -37,6 +38,7 @@ export function Header() {
             />}
           </div>
         </div>
+      </div>
       </div>
       {path === '/' && (
         <section className="hero-event" aria-labelledby="hero-event-title">

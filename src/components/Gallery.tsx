@@ -1,5 +1,6 @@
 'use client';
 
+import { FontIcon } from './FontIcon';
 import { useEffect, useState } from 'react';
 import { type Poster } from '@/data/archive';
 import { Modal } from './Modal';
@@ -71,7 +72,7 @@ export function Gallery({ items, label, interactiveCards = false }: { items: Pos
       <div className={`poster-controls${interactiveCards ? ' scene-poster-controls' : ''}`}>
         <div className="segmented">{(['front', 'back'] as const).map(value => <button key={value} aria-pressed={side === value} onClick={() => changeSide(value)}>{sideLabel(value)}</button>)}</div>
         <div className="zoom-controls">
-          <button aria-label="포스터 축소" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - .5))}>−</button>
+          <button aria-label="포스터 축소" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - .5))}><FontIcon kind="minus" /></button>
           <span aria-live="polite">{zoom * 100}%</span>
           <button aria-label="포스터 확대" disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + .5))}>+</button>
         </div>

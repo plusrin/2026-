@@ -41,7 +41,7 @@ test('all 15 contents entries use real Bookk Light for dates, summaries and stud
    const nodes=page.locator(selector);
    for(let i=0;i<await nodes.count();i++)await expect(nodes.nth(i)).toHaveCSS('font-family',/BookkMyungjo/);
   }
-  await expect(page.locator('.page-intro .eyebrow')).toHaveCSS('font-family',/Arial/);
+  await expect(page.locator('.page-intro .eyebrow')).toHaveCSS('font-family',/BookkMyungjo/);
   await page.getByRole('button',{name:'전체 목차',exact:false}).click();
   const dialog=page.getByRole('dialog');await expect(dialog.locator('.toc-list li')).toHaveCount(15);
   await expect(dialog).toHaveCSS('overflow-y','auto');
@@ -68,5 +68,53 @@ test('all 15 contents entries use real Bookk Light for dates, summaries and stud
   expect(await dialog.evaluate(el=>el.scrollTop>0)).toBe(true);
   await last.getByRole('button').click();await expect(page.locator('.reader-count')).toHaveText('15 / 15');
   await expect(page.getByRole('dialog')).toHaveCount(0);
+ }
+});
+
+test('all rendered site text, English/Korean song and both dialogs use actual Bookk faces',async({page,browserName})=>{
+ test.setTimeout(90000);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});
+  for(const route of ['/','/schedule','/readings','/archive','/next']){
+   await page.goto(route);
+   async function audit(){
+    await page.evaluate(()=>document.fonts.ready);
+    const nodes=await page.evaluate(()=>{
+     return Array.from(document.body.querySelectorAll<HTMLElement>('*')).filter(el=>
+      !['SCRIPT','STYLE','NEXTJS-PORTAL'].includes(el.tagName)&&!el.closest('nextjs-portal')&&el.getClientRects().length>0&&parseFloat(getComputedStyle(el).fontSize)>0&&
+      Array.from(el.childNodes).some(node=>node.nodeType===Node.TEXT_NODE&&node.textContent?.trim())).map(el=>{
+       const path=[];let current:Element|null=el;
+       while(current&&current!==document.body){path.unshift(`${current.tagName.toLowerCase()}:nth-child(${Array.from(current.parentElement!.children).indexOf(current)+1})`);current=current.parentElement;}
+       return {selector:'body>'+path.join('>'),family:getComputedStyle(el).fontFamily};
+      });
+    });
+    for(const node of nodes)expect(node.family).toContain('BookkMyungjo');
+    if(browserName==='chromium'){
+     const session=await page.context().newCDPSession(page);await session.send('DOM.enable');await session.send('CSS.enable');
+     const {root}=await session.send('DOM.getDocument');
+     for(const node of nodes){
+      const {nodeId}=await session.send('DOM.querySelector',{nodeId:root.nodeId,selector:node.selector});
+      const {fonts}=await session.send('CSS.getPlatformFontsForNode',{nodeId});
+      const used=fonts.filter((f:{glyphCount:number})=>f.glyphCount>0);
+      expect(used.length,`${width}px ${route}: text must have rendered glyphs`).toBeGreaterThan(0);
+      for(const font of used)expect(font.isCustomFont&&['BookkMyungjo-Lt','BookkMyungjo-Bd'].includes(font.postScriptName),`${width}px ${route}: unexpected font ${font.postScriptName} on ${node.selector}`).toBe(true);
+     }
+     await session.detach();
+    }
+   }
+   await audit();
+   if(route==='/schedule'){
+    await page.getByRole('button',{name:'원문 보기',exact:true}).click();await audit();
+    await page.getByRole('button',{name:'한국어 해석',exact:true}).click();await audit();
+   }
+   if(route==='/readings'){
+    await page.getByRole('button',{name:'전체 목차',exact:false}).click();await audit();
+    await page.getByRole('dialog').locator('.toc-list li').nth(3).getByRole('button').click();await audit();
+    await expect(page.locator('.source-bar-text')).toHaveText('―');
+   }
+   if(route==='/archive'){
+    await page.locator(width===390?'.poster-thumbnail':'.poster-card-controls button:last-child').first().click();await audit();
+   }
+  }
  }
 });
