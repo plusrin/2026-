@@ -38,6 +38,16 @@ export function Header() {
           </div>
         </div>
       </div>
+      {path === '/' && (
+        <section className="hero-event" aria-labelledby="hero-event-title">
+          <h2 id="hero-event-title">나의 시선이 끝나는 곳에서,</h2>
+          <p className="event-theme">{event.theme}</p>
+          <div className="hero-facts">
+            <p><span>일시</span>{event.date}</p>
+            <p><span>장소</span>{event.venue}</p>
+          </div>
+        </section>
+      )}
       <nav className="voyage-tabs" aria-label="주 메뉴">
         {links.map(link => <Link key={link.href} href={link.href} aria-current={path === link.href ? 'page' : undefined}>{link.label}</Link>)}
       </nav>

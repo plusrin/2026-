@@ -22,6 +22,15 @@ test('five menus, accurate event information, no horizontal overflow at 390px', 
  expect(await tabs.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await expect(page.getByText('2026년 11월 3일 화요일 저녁 7시',{exact:false})).toBeVisible();
  await expect(page.getByText('창원문성고등학교 2층 문성홀',{exact:false})).toBeVisible();
+ await expect(page.getByText('2026년 창원문성고등학교 낭독회',{exact:true})).toHaveCount(1);
+ await expect(page.locator('main .home-event')).toHaveCount(0);
+ const details=await page.locator('.hero-event').boundingBox();
+ const navBox=await tabs.boundingBox();
+ const copy=await page.locator('.voyage-hero-copy').boundingBox();
+ expect(copy!.y+copy!.height).toBeLessThan(art!.y);
+ expect(details!.y).toBeGreaterThan(art!.y+art!.height*.68);
+ expect(details!.y+details!.height).toBeLessThanOrEqual(navBox!.y);
+ await expect(page.locator('.hero-event')).toContainText('나의 시선이 끝나는 곳에서,');
  for(const route of routes){
   await page.getByRole('navigation').getByRole('link',{name:route.label,exact:true}).click();
   await expect(page.getByRole('navigation').getByRole('link',{name:route.label,exact:true})).toHaveAttribute('aria-current','page');
@@ -118,7 +127,7 @@ test('uncropped artwork and single-row sea tabs across mobile and tablet sizes',
    expect(await nav.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${width}px ${route}: page fits`).toBe(true);
    await expect(page.locator('.voyage-title')).toHaveText('가장 먼 항해');
-   await expect(page.locator('main')).toHaveCSS('background-color','rgb(8, 30, 45)');
+   await expect(page.locator('main')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
    await expect(page.locator('.voyage-sea img')).toHaveCSS('object-fit','contain');
    if(width<=430){
     const actualRatio=await page.locator('.voyage-sea img').evaluate((el:HTMLImageElement)=>el.getBoundingClientRect().width/el.getBoundingClientRect().height);
@@ -126,4 +135,21 @@ test('uncropped artwork and single-row sea tabs across mobile and tablet sizes',
    }
   }
  }
+});
+
+test('generated sky and water paintings load without tiling and leave reading paper plain', async ({page}) => {
+ await page.goto('/readings');
+ const sky=await page.locator('.voyage-hero').evaluate(el=>getComputedStyle(el,'::before').backgroundImage);
+ expect(sky).toContain('/images/backgrounds/voyage-sky-extension.webp');
+ const ocean=page.locator('.landscape-ocean');
+ await expect(ocean).toHaveCSS('position','fixed');
+ expect(await ocean.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('/images/backgrounds/voyage-ocean-extension.webp');
+ await expect(ocean).toHaveCSS('background-repeat','no-repeat, no-repeat');
+ for(const file of ['/images/backgrounds/voyage-sky-extension.webp','/images/backgrounds/voyage-ocean-extension.webp']){
+  const loaded=await page.evaluate(async src=>{const image=new Image();image.src=src;await image.decode();return image.naturalWidth>0&&image.naturalHeight>0;},file);
+  expect(loaded).toBe(true);
+ }
+ await expect(page.locator('.reading-paper')).toHaveCSS('background-color','rgb(244, 232, 211)');
+ await expect(page.locator('.reading-paper')).toHaveCSS('background-image','none');
+ await expect(page.locator('.reading-paper img,.reading-paper svg')).toHaveCount(0);
 });
