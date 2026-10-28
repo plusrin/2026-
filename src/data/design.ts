@@ -7,7 +7,7 @@ export const design: {
  backgrounds: Record<string, string | null>;
 } = {
  homeImage: '/images/home/main-voyage.jpg',
- bookCover: null, // Exact uploaded cover file/URL is still needed; never substitute another edition.
+ bookCover: '/images/home/werther-cover.jpg',
  skyExtension: '/images/backgrounds/voyage-sky-extension.webp',
  seaExtension: '/images/backgrounds/voyage-ocean-extension.webp',
  backgrounds: { home: null, schedule: null, readings: null, archive: null, next: null },

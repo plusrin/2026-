@@ -308,3 +308,4 @@ body { background: var(--deep); color: var(--ivory); }
 @media (max-width: 700px) {
   .book-cover { flex-basis: 90px; width: 90px; }
 }
+.book-cover + div { flex: 1; min-width: 0; }

@@ -145,4 +145,4 @@ PYTHONPATH=/tmp/hwp-inspect-deps python3 scripts/import_manuscript.py /path/to/�
 
 밤바다 히어로·5개 탭의 모바일 디자인 및 콘텐츠 보존 검증은 `MOBILE_UI_VALIDATION.md`를 참고하세요.
 
-목차 요약은 목차에만 표시하며 원고 전문에는 삽입하지 않습니다. 주제도서 표지는 `src/data/design.ts`의 `bookCover`에 실제 제공 파일 경로를 등록합니다. 현재 사진 5 원본의 다운로드용 파일 참조가 없어 `null`이며, 한자 장식은 제거했습니다.
+목차 요약은 목차에만 표시하며 원고 전문에는 삽입하지 않습니다. 주제도서 표지는 `src/data/design.ts`의 `bookCover`에 실제 제공 파일 경로를 등록합니다. 사진 5와 일치하는 `public/images/home/werther-cover.jpg` 원본을 사용하며, 한자 장식은 제거했습니다.

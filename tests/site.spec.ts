@@ -188,3 +188,19 @@ test('all contents entries retain source dates and show summary then class and n
   await page.keyboard.press('Escape');
  }
 });
+
+test('exact uploaded book cover loads uncropped at mobile and desktop sizes',async({page})=>{
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/');
+  const cover=page.getByRole('img',{name:'《젊은 베르테르의 슬픔》 책 표지',exact:true});
+  await expect(cover).toHaveAttribute('src','/images/home/werther-cover.jpg');
+  await expect(cover).toHaveCSS('object-fit','contain');
+  const dimensions=await cover.evaluate(async(el:HTMLImageElement)=>{await el.decode();const box=el.getBoundingClientRect();return {naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight,width:box.width,height:box.height};});
+  expect(dimensions.naturalWidth).toBe(372);expect(dimensions.naturalHeight).toBe(541);
+  expect(Math.abs(dimensions.width/dimensions.height-372/541)).toBeLessThan(.01);
+  expect(dimensions.width).toBe(width===390?90:108);
+  expect(await page.locator('.book-panel').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await expect(page.locator('.book-panel h3')).toHaveText('《젊은 베르테르의 슬픔》');
+  await expect(page.locator('.book-icon')).toHaveCount(0);
+ }
+});
