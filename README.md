@@ -54,10 +54,10 @@ tests/               모바일·데스크톱 브라우저 기능 검증
 
 - 메인 그림: `public/images/home/main-voyage.jpg`를 사용합니다. 원본 비율을 보존한 공통 풀스크린 히어로와 네이비 그라데이션을 적용했습니다.
 - `낭독회 원고_261022_1952버전.hwp`: **15개 구간 전문 반영 완료**. 원문 데이터는 `src/data/manuscript.json`, 메타데이터와 타입은 `src/data/readings.ts`에 분리했습니다. 원본 197개 문단 레코드(구간 표제 15개 + 본문 블록 182개)를 모두 보존했습니다.
-- `BookkMyungjo_Light.ttf`, `BookkMyungjo_Bold.ttf`: 미제공. 시스템 명조로 임시 표시합니다.
+- `BookkMyungjo_Light.ttf`, `BookkMyungjo_Bold.ttf`: 업로드 원본을 연결했습니다. 같은 서체의 WOFF2를 우선 로드하고 TTF를 예비 소스로 유지합니다. Light 300, Bold 700입니다.
 - 5개 디자인 시안: 미제공. 지시서의 임시 팔레트와 레이아웃 요구사항으로 구현했습니다.
 - 세이렌의 노래 영어 원문·한국어 해석: 미제공. 각 언어의 미제공 안내만 표시합니다.
-- 학생 포스터 앞·뒷면과 학반·성명: 미제공. 실제 전시는 빈 구조입니다.
+- 사건현장 포스터: 학생 5명의 앞·뒷면 총 10개 파일을 연결했습니다. 파일명에서 확인한 이름과 오류 종류만 사용하며 학반은 표시하지 않습니다. 일상생활 포스터 영역은 미제공 상태를 유지합니다.
 - 낭독자 학반: 15개 구간 모두 반영 완료. `src/data/readingDetails.ts`에서 구간 순서별 요약과 학반을 관리합니다. 1번 김지후는 1학년 4반, 15번 김지후는 1학년 1반입니다. 개인 학번은 사용하지 않습니다.
 - 다음 행사의 일시·장소: 미정으로 표시합니다.
 
@@ -80,7 +80,7 @@ PYTHONPATH=/tmp/hwp-inspect-deps python3 scripts/import_manuscript.py /path/to/�
 - 7번 `10월 20일`, 8번 `1772년 2월 17일`, 10번 `9월 6일`은 문단 안에 있으므로 문단을 분리하지 않고 해당 날짜만 굵게 표시합니다.
 - 15번은 추가 UI 제목 `김지후 낭독`과 원문의 `[사회자]` 제목으로 시각적으로 구분합니다. 사회자 전문은 같은 15번에 유지하며 16번을 만들지 않습니다.
 - 날짜의 띄어쓰기와 `(추정)`도 원본 표기를 따릅니다.
-- 원고 종이는 아이보리 바탕에 텍스트만 표시합니다. 원고 폰트는 아직 미제공이어서 시스템 명조를 사용합니다.
+- 원고 종이는 아이보리 바탕에 텍스트만 표시하며 업로드된 부크크 명조 Light/Bold를 사용합니다.
 
 추출·교차 대조와 구간별 검증 기록은 `MANUSCRIPT_VALIDATION.md`를 참고하세요.
 
@@ -89,28 +89,15 @@ PYTHONPATH=/tmp/hwp-inspect-deps python3 scripts/import_manuscript.py /path/to/�
 1. 메인 그림을 `public/images/home/`에 넣고 `src/data/design.ts`의 `homeImage`에 `/images/home/파일명.png`를 등록합니다. 원본 비율과 전체 그림을 유지하도록 `object-fit: contain`을 사용합니다.
 2. 페이지별 배경은 `backgrounds.home / schedule / readings / archive / next`에 독립적인 경로를 등록합니다. 배경 등록 여부와 콘텐츠·인터랙션은 분리되어 있습니다. 원고 종이에는 배경 이미지를 넣지 않습니다.
 3. 임시 색상은 `src/app/globals.css`의 `:root` 변수에서 변경합니다.
-4. 실제 폰트를 `public/fonts/`에 넣은 후 `globals.css`에 아래 선언을 추가합니다. 파일이 없을 때는 추가하지 마세요.
+4. 부크크 명조 원본 TTF와 같은 글리프의 WOFF2 파일을 `public/fonts/`에 보관합니다. 이미 `globals.css`에 Light 300·Bold 700의 `@font-face`를 선언했고, `--font-reading`과 `--font-display` 모두 `BookkMyungjo`를 사용합니다. 기존 UI 고딕체는 `--font-ui`로 유지합니다.
 
-```css
-@font-face {
-  font-family: 'BookkMyungjo';
-  src: url('/fonts/BookkMyungjo_Light.ttf') format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'BookkMyungjo';
-  src: url('/fonts/BookkMyungjo_Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-display: swap;
-}
-```
+원본 폰트를 교체한 경우에만 `scripts/build_webfonts.py`로 WOFF2를 다시 만듭니다. Python fonttools·brotli가 필요하며 앱 실행/빌드에는 필요하지 않습니다. 원본 TTF는 덮어쓰지 않습니다. 기존 글자 크기·굵기 선언·자간·행간은 그대로 두고 실제 Light/Bold 파일을 사용하며 가상 굵기 합성을 막습니다.
 
-원고는 `--font-reading`, 나머지 제목은 `--font-display`, UI는 `--font-ui`로 분리되어 있습니다.
+Safari/WebKit 검사를 실행할 수 있는 컴퓨터에서는 `npx playwright install webkit` 후 `npx playwright test --config=playwright.webkit.config.ts`로 폰트 전용 검사를 실행할 수 있습니다. 현재 클라우드에서는 브라우저 다운로드 403으로 Safari 엔진 실측은 수행하지 못했습니다.
 
 ## 학생 포스터 등록
 
-파일을 `public/images/archive/`에 넣고 `src/data/archive.ts`의 `posters` 배열에 실제 정보를 등록합니다.
+사건현장 작품은 `public/images/archive/` 원본 앞·뒷면 파일을 `src/data/scenePosters.json`에 짝지어 등록합니다. `src/data/archive.ts`에서 scene 카테고리로 연결하며, 일상생활 전시와 구분합니다. 학반을 모르면 필드를 생략하세요.
 
 ```ts
 // 아래는 필드 형식 설명입니다. 실제 학생 데이터로 교체해 등록하세요.
@@ -126,7 +113,7 @@ PYTHONPATH=/tmp/hwp-inspect-deps python3 scripts/import_manuscript.py /path/to/�
 }
 ```
 
-모바일 2열이며 작품 수에 따라 행이 추가됩니다. 클릭 확대, 이미지 클릭 뒤집기, 앞·뒷면 버튼, 100~300% 확대/축소, 원본 보기, Escape 닫기와 초점 복귀를 지원합니다. 데이터와 파일만 추가하면 됩니다.
+사건현장은 데스크톱 2열, 600px 이하 모바일 1열입니다. 카드 이미지 또는 앞/뒷면 보기 버튼으로 작품별 독립 전환을 제공하고 확대 보기에서는 양면·100~300% 확대/축소·원본 보기·Escape 닫기·초점 복귀를 지원합니다. 일상생활 전시의 기존 갤러리 동작은 유지합니다.
 
 ## Vercel 배포
 
@@ -141,7 +128,7 @@ PYTHONPATH=/tmp/hwp-inspect-deps python3 scripts/import_manuscript.py /path/to/�
 
 실행 결과는 `VALIDATION.md`에 기록합니다. 브라우저 테스트는 390px 메뉴 이동·가로 넘침, 행사 정보, 15개 원고 구간·경계 버튼·목차·URL 복원·글자 크기, 노래 언어 전환, 외부 링크 속성, 빈 전시, 1440px 레이아웃과 테스트 전용 포스터 앞뒤 전환·확대·원본 링크·Escape·초점 복귀를 검사합니다.
 
-원고 전문은 원본 HWP와 별도 pyhwp 변환 결과로 대조했고, 브라우저에서 15개 구간의 모든 본문 블록이 저장 데이터와 일치하는지 검사합니다. 메인 그림은 원본 전체 비율로 표시하며 모바일 캡처와 브라우저에서 확인했습니다. 실제 포스터 화질과 제공 예정 폰트의 모양은 **자료 미제공으로 검증하지 못했습니다**. 외부 사이트의 실제 가용성은 별도 확인이 필요합니다.
+원고 전문은 원본 HWP와 별도 pyhwp 변환 결과로 대조했고, 브라우저에서 15개 구간의 모든 본문 블록이 저장 데이터와 일치하는지 검사합니다. 메인 그림은 원본 전체 비율로 표시하며 모바일 캡처와 브라우저에서 확인했습니다. 사건현장 포스터 10개는 원본 로딩·비율·전환을 검증했고 부크크 Light/Bold는 Chromium의 실제 사용 폰트로 확인했습니다. Safari 엔진 검증은 다운로드 차단으로 미실행입니다. 외부 사이트의 실제 가용성은 별도 확인이 필요합니다.
 
 밤바다 히어로·5개 탭의 모바일 디자인 및 콘텐츠 보존 검증은 `MOBILE_UI_VALIDATION.md`를 참고하세요.
 

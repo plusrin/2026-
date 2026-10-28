@@ -18,6 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
   return (
     <html lang="ko" data-scroll-behavior="smooth">
+      <head><link rel="preload" href="/fonts/BookkMyungjo_Light.woff2" as="font" type="font/woff2" crossOrigin="anonymous" /></head>
       <body>
         <a href="#main" className="skip-link">본문으로 건너뛰기</a>
         <div className="voyage-landscape" style={landscapeStyle}>

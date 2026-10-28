@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import manuscript from '../src/data/manuscript.json';
 import { readingDetails } from '../src/data/readingDetails';
+import scenePosters from '../src/data/scenePosters.json';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
  const routes = [{href:'/',heading:'가장 먼 항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
@@ -100,7 +101,7 @@ test('siren languages and honest missing text, external test link and empty exhi
  await readingLink.click(); await expect(page).toHaveURL(/\/readings$/);
  await page.goto('/archive');const link=page.getByRole('link',{name:'심리테스트 체험하기',exact:false});
  await expect(link).toHaveAttribute('href','https://cognitive-error.vercel.app/');await expect(link).toHaveAttribute('rel','noopener noreferrer');
- await expect(page.locator('.empty-gallery')).toHaveCount(2);await expect(page.locator('.poster-card')).toHaveCount(0);
+ await expect(page.locator('.empty-gallery')).toHaveCount(1);await expect(page.locator('.scene-gallery .poster-card')).toHaveCount(5);
 });
 
 test('desktop layout stays within viewport',async({page})=>{
@@ -203,4 +204,42 @@ test('exact uploaded book cover loads uncropped at mobile and desktop sizes',asy
   await expect(page.locator('.book-panel h3')).toHaveText('《젊은 베르테르의 슬픔》');
   await expect(page.locator('.book-icon')).toHaveCount(0);
  }
+});
+
+test('five real scene posters: correct pairs, independent touch flips and both-side enlargement',async({page})=>{
+ test.setTimeout(90000);
+ await page.goto('/archive');
+ const cards=page.locator('.scene-gallery .poster-card');await expect(cards).toHaveCount(5);
+ for(let i=0;i<5;i++){
+  const card=cards.nth(i),poster=scenePosters[i];
+  await expect(card.locator('h3')).toHaveText(poster.title);await expect(card.locator('.poster-owner')).toHaveText(poster.student);
+  await expect(card.locator('img')).toHaveAttribute('src',poster.front);
+  await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();await expect(card.locator('img')).toHaveAttribute('src',poster.back);
+  for(let j=0;j<5;j++)if(i!==j)await expect(cards.nth(j).locator('img')).toHaveAttribute('src',scenePosters[j].front);
+  await card.getByRole('button',{name:/뒷면 확대 보기$/}).click();
+  const dialog=page.getByRole('dialog');await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.back);
+  await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.back);
+  await dialog.getByRole('button',{name:'앞면',exact:true}).click();await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.front);
+  await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.front);
+  await dialog.getByRole('button',{name:'포스터 확대',exact:true}).click();await expect(dialog.locator('.zoom-controls')).toContainText('150%');
+  await page.keyboard.press('Escape');await expect(card.locator('img')).toHaveAttribute('src',poster.front);
+  await card.locator('.poster-flip').click();await expect(card.locator('img')).toHaveAttribute('src',poster.back);
+  await card.locator('.poster-flip').click();await expect(card.locator('img')).toHaveAttribute('src',poster.front);
+ }
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});
+  expect(await page.locator('.scene-gallery').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(width===390?1:2);
+  for(let i=0;i<5;i++){
+   const card=cards.nth(i);await card.scrollIntoViewIfNeeded();
+   for(const side of ['front','back'] as const){
+    if(side==='back')await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();
+    const size=await card.locator('img').evaluate(async(el:HTMLImageElement)=>{await el.decode();const r=el.getBoundingClientRect();return {width:r.width,height:r.height,naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight};});
+    expect(Math.abs(size.width/size.height-size.naturalWidth/size.naturalHeight)).toBeLessThan(.01);
+    await expect(card.locator('img')).toHaveCSS('object-fit','contain');
+   }
+   await card.getByRole('button',{name:'앞면 보기',exact:true}).click();
+  }
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+ await expect(page.locator('.gallery-section').nth(1).locator('.empty-gallery')).toHaveCount(1);
 });
