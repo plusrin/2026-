@@ -340,3 +340,18 @@ body { background: var(--deep); color: var(--ivory); }
 @keyframes poster-face-appear { from { opacity: .5; } to { opacity: 1; } }
 @media (max-width: 600px) { .gallery-grid.scene-gallery { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .interactive-poster .poster-flip img { animation: none; } }
+
+/* Font-only fixes for UI text that otherwise inherits the sans-serif body font.
+   Keep the English eyebrow, existing serif titles/numbers and all layout rules. */
+.voyage-tabs a,
+.page-readings .page-description,
+.page-readings .reader-toolbar button,
+.page-readings .reader-navigation .button {
+  font-family: var(--font-reading);
+}
+.toc-date,
+.toc-summary,
+.toc-student {
+  font-family: var(--font-reading);
+  font-weight: 300;
+}

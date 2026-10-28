@@ -32,3 +32,41 @@ test('Bookk Light and Bold load for Korean text on mobile and desktop without sy
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
 });
+
+test('all 15 contents entries use real Bookk Light for dates, summaries and students without changing scrolling',async({page,browserName})=>{
+ test.setTimeout(60000);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/readings');await page.evaluate(()=>document.fonts.ready);
+  for(const selector of ['.voyage-tabs a','.page-description','.reader-toolbar button','.reader-count']){
+   const nodes=page.locator(selector);
+   for(let i=0;i<await nodes.count();i++)await expect(nodes.nth(i)).toHaveCSS('font-family',/BookkMyungjo/);
+  }
+  await expect(page.locator('.page-intro .eyebrow')).toHaveCSS('font-family',/Arial/);
+  await page.getByRole('button',{name:'전체 목차',exact:false}).click();
+  const dialog=page.getByRole('dialog');await expect(dialog.locator('.toc-list li')).toHaveCount(15);
+  await expect(dialog).toHaveCSS('overflow-y','auto');
+  const nodes=dialog.locator('.toc-date,.toc-summary,.toc-student');
+  await expect(nodes).toHaveCount(43); // 15 summaries + 15 students + 13 source dates.
+  for(let i=0;i<43;i++){
+   await expect(nodes.nth(i)).toHaveCSS('font-family',/BookkMyungjo/);
+   await expect(nodes.nth(i)).toHaveCSS('font-weight','300');
+  }
+  if(browserName==='chromium'){
+   const session=await page.context().newCDPSession(page);await session.send('DOM.enable');await session.send('CSS.enable');
+   const {root}=await session.send('DOM.getDocument');
+   for(let i=1;i<=15;i++)for(const cls of ['toc-date','toc-summary','toc-student']){
+    const selector=`.toc-list li:nth-child(${i}) .${cls}`;
+    if(!await dialog.locator(selector).count())continue;
+    const {nodeId}=await session.send('DOM.querySelector',{nodeId:root.nodeId,selector});
+    const {fonts}=await session.send('CSS.getPlatformFontsForNode',{nodeId});
+    expect(fonts.some((f:{isCustomFont:boolean;postScriptName:string;glyphCount:number})=>f.isCustomFont&&f.postScriptName==='BookkMyungjo-Lt'&&f.glyphCount>0),`${width}px item ${i} ${cls}: actual uploaded Light font`).toBe(true);
+    expect(fonts.filter((f:{isCustomFont:boolean;glyphCount:number})=>!f.isCustomFont&&f.glyphCount>0)).toHaveLength(0);
+   }
+   await session.detach();
+  }
+  const last=dialog.locator('.toc-list li').last();await last.scrollIntoViewIfNeeded();
+  expect(await dialog.evaluate(el=>el.scrollTop>0)).toBe(true);
+  await last.getByRole('button').click();await expect(page.locator('.reader-count')).toHaveText('15 / 15');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+ }
+});
