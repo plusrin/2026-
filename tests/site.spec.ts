@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import manuscript from '../src/data/manuscript.json';
 import { readingDetails } from '../src/data/readingDetails';
 import scenePosters from '../src/data/scenePosters.json';
+import sirenParagraphs from '../src/data/siren.json';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
  const routes = [{href:'/',heading:'가장 먼 항해',label:'홈'},{href:'/schedule',heading:'오늘의 식순',label:'식순'},{href:'/readings',heading:'목소리를 따라',label:'원고'},{href:'/archive',heading:'이전 항해',label:'이전 항해'},{href:'/next',heading:'다음 항해',label:'다음 항해'}];
@@ -88,13 +89,27 @@ test('all fifteen readings, contents dialog, boundaries, font controls and brows
  await expect(page.getByRole('button',{name:'전체 목차',exact:false})).toBeFocused();
 });
 
-test('siren languages and honest missing text, external test link and empty exhibitions',async({page})=>{
- await page.goto('/schedule');await page.getByRole('button',{name:'원문 보기',exact:true}).click();
- await expect(page.getByText('영어 원문은 아직 제공되지 않았습니다.',{exact:false})).toBeVisible();
- await page.getByRole('button',{name:'한국어 해석',exact:true}).click();
- await expect(page.getByText('한국어 해석은 아직 제공되지 않았습니다.',{exact:false})).toBeVisible();
- await page.getByRole('button',{name:'원문 닫기',exact:true}).click();
- await expect(page.locator('#siren-text')).toHaveCount(0);
+test('source-exact siren languages on mobile and desktop, external test link and empty exhibitions',async({page})=>{
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:844});
+  await page.goto('/schedule');
+  await expect(page.locator('.schedule-item')).toHaveCount(6);
+  await expect(page.locator('.schedule-item').nth(1)).toContainText('2학년 3반 원채영');
+  await page.getByRole('button',{name:'원문 보기',exact:true}).click();
+  const text=page.locator('#siren-text .preserve');
+  for(const [language,label,code] of [['english','English','en'],['korean','한국어 해석','ko'],['english','English','en']] as const){
+   await page.getByRole('button',{name:label,exact:true}).click();
+   expect(await text.textContent()).toBe(sirenParagraphs[language].join('\n\n'));
+   await expect(text).toHaveAttribute('lang',code);
+   await expect(text).toHaveCSS('white-space','pre-wrap');
+   await expect(page.getByRole('button',{name:label,exact:true})).toHaveAttribute('aria-pressed','true');
+   await text.evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().bottom+window.scrollY-innerHeight+20));
+   expect(await text.evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight)).toBe(true);
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  }
+  await page.getByRole('button',{name:'원문 닫기',exact:true}).click();
+  await expect(page.locator('#siren-text')).toHaveCount(0);
+ }
  await expect(page.getByText('세부 진행 시간은 확정 후 안내합니다.',{exact:true})).toHaveCount(0);
  const readingLink=page.getByRole('link',{name:'낭독 원고 보기',exact:true});
  await expect(readingLink).toHaveAttribute('href','/readings');

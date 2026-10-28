@@ -30,7 +30,7 @@ export function Schedule() {
                     <button key={language} aria-pressed={lang === language} onClick={() => setLang(language)}>{language === 'english' ? 'English' : '한국어 해석'}</button>
                   ))}
                 </div>
-                <p className="preserve">{siren[lang] ?? `${lang === 'english' ? '영어 원문' : '한국어 해석'}은 아직 제공되지 않았습니다. 실제 텍스트를 받은 후 공개합니다.`}</p>
+                <p className="preserve" lang={lang === 'english' ? 'en' : 'ko'}>{siren[lang]}</p>
               </div>
             )}
             {index === 3 && <Link href="/readings" className="schedule-action reading-action">낭독 원고 보기</Link>}
