@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import manuscript from '../src/data/manuscript.json';
 import { readingDetails } from '../src/data/readingDetails';
 import scenePosters from '../src/data/scenePosters.json';
+import dailyPosters from '../src/data/dailyPosters.json';
 import sirenParagraphs from '../src/data/siren.json';
 
 test('five menus, accurate event information, no horizontal overflow at 390px', async ({page})=>{
@@ -135,7 +136,7 @@ test('source-exact siren languages on mobile and desktop, external test link and
  await readingLink.click(); await expect(page).toHaveURL(/\/readings$/);
  await page.goto('/archive');const link=page.getByRole('link',{name:'심리테스트 체험하기',exact:false});
  await expect(link).toHaveAttribute('href','https://cognitive-error.vercel.app/');await expect(link).toHaveAttribute('rel','noopener noreferrer');
- await expect(page.locator('.empty-gallery')).toHaveCount(1);await expect(page.locator('.scene-gallery .poster-card')).toHaveCount(5);
+ await expect(page.locator('.empty-gallery')).toHaveCount(0);await expect(page.locator('.scene-gallery .poster-card')).toHaveCount(6);
 });
 
 test('desktop layout stays within viewport',async({page})=>{
@@ -244,13 +245,13 @@ test('five real scene posters: correct pairs, independent touch flips and both-s
  test.setTimeout(90000);
  await page.setViewportSize({width:1440,height:900});
  await page.goto('/archive');
- const cards=page.locator('.scene-gallery .poster-card');await expect(cards).toHaveCount(5);
- for(let i=0;i<5;i++){
+ const cards=page.locator('.scene-gallery .poster-card');await expect(cards).toHaveCount(6);
+ for(let i=0;i<scenePosters.length;i++){
   const card=cards.nth(i),poster=scenePosters[i];
-  await expect(card.locator('h3')).toHaveText(poster.title);await expect(card.locator('.poster-owner')).toHaveText(poster.student);
+  await expect(card.locator('h3')).toHaveText(poster.title);await expect(card.locator('.poster-owner')).toHaveText(`${poster.className} ${poster.student}`);
   await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.front);
   await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();await expect(card.locator('.poster-flip img')).toHaveAttribute('src',poster.back);
-  for(let j=0;j<5;j++)if(i!==j)await expect(cards.nth(j).locator('.poster-flip img')).toHaveAttribute('src',scenePosters[j].front);
+  for(let j=0;j<scenePosters.length;j++)if(i!==j)await expect(cards.nth(j).locator('.poster-flip img')).toHaveAttribute('src',scenePosters[j].front);
   await card.getByRole('button',{name:/뒷면 확대 보기$/}).click();
   const dialog=page.getByRole('dialog');await expect(dialog.locator('.poster-viewport img')).toHaveAttribute('src',poster.back);
   await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.back);
@@ -264,7 +265,7 @@ test('five real scene posters: correct pairs, independent touch flips and both-s
  for(const width of [1440]){
   await page.setViewportSize({width,height:900});
   expect(await page.locator('.scene-gallery').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2);
-  for(let i=0;i<5;i++){
+  for(let i=0;i<scenePosters.length;i++){
    const card=cards.nth(i);await card.scrollIntoViewIfNeeded();
    for(const side of ['front','back'] as const){
     if(side==='back')await card.getByRole('button',{name:'뒷면 보기',exact:true}).click();
@@ -276,7 +277,7 @@ test('five real scene posters: correct pairs, independent touch flips and both-s
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
- await expect(page.locator('.gallery-section').nth(1).locator('.empty-gallery')).toHaveCount(1);
+ await expect(page.locator('.gallery-section').nth(1).locator('.empty-gallery')).toHaveCount(0);
 });
 
 test('mobile scene thumbnails: three columns, five front faces, modal flip, pan and focus return',async({page})=>{
@@ -284,13 +285,13 @@ test('mobile scene thumbnails: three columns, five front faces, modal flip, pan 
   await page.setViewportSize({width,height:844});
   await page.goto('/archive');
   const grid=page.locator('.scene-gallery'), thumbnails=grid.locator('.poster-thumbnail');
-  await expect(thumbnails).toHaveCount(5);
+  await expect(thumbnails).toHaveCount(6);
   expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3);
   await expect(grid.locator('.poster-card-controls').first()).toBeHidden();
   const boxes=[];
-  for(let i=0;i<5;i++){
+  for(let i=0;i<scenePosters.length;i++){
    const thumb=thumbnails.nth(i),poster=scenePosters[i];
-   await expect(thumb.locator('span')).toHaveText(poster.student);
+   await expect(thumb.locator('span')).toHaveText(`${poster.className} ${poster.student}`);
    await expect(thumb.locator('img')).toHaveAttribute('src',poster.front);
    await expect(thumb.locator('img')).toHaveCSS('object-fit','contain');
    boxes.push(await thumb.evaluate(el=>el.getBoundingClientRect().top+window.scrollY));
@@ -313,5 +314,49 @@ test('mobile scene thumbnails: three columns, five front faces, modal flip, pan 
   expect(boxes[3]).toBeGreaterThan(boxes[0]);
   expect(boxes[3]).toBe(boxes[4]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+});
+
+test('daily single-face works: exact filename credits, responsive layout, modal zoom and no flips',async({page})=>{
+ test.setTimeout(120000);
+ const {readdirSync}=await import('node:fs');
+ const files=readdirSync('public/images/archive/daily').filter(f=>/\.(png|jpe?g|webp)$/i.test(f)).sort();
+ expect(dailyPosters.map(p=>p.front.split('/').pop()).sort()).toEqual(files);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/archive');
+  const grid=page.locator('.daily-gallery');await expect(grid.locator('.poster-card')).toHaveCount(files.length);
+  expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(width===390?3:2);
+  for(let i=0;i<dailyPosters.length;i++){
+   const poster=dailyPosters[i],card=grid.locator('.poster-card').nth(i),thumb=card.locator('.poster-thumbnail');
+   const filename=poster.front.split('/').pop()!;expect(poster.student).toBe(filename.replace(/\.[^.]+$/,''));
+   await expect(card.locator('.poster-owner')).toHaveText(poster.student);await expect(thumb.locator('span')).toHaveText(poster.student);
+   await thumb.scrollIntoViewIfNeeded();await thumb.click();
+   const dialog=page.getByRole('dialog');await expect(dialog.locator('.poster-credit')).toContainText(poster.student);
+   await expect(dialog.locator('.segmented')).toHaveCount(0);
+   await expect(dialog.locator('.poster-viewport button')).toHaveCount(0);
+   const image=dialog.locator('.poster-viewport img');await expect(image).toHaveAttribute('src',poster.front);
+   expect(await image.evaluate(async(el:HTMLImageElement)=>{await el.decode();return el.naturalWidth>0&&el.naturalHeight>0;})).toBe(true);
+   await expect(dialog.getByRole('link',{name:'원본 보기',exact:false})).toHaveAttribute('href',poster.front);
+   await dialog.getByRole('button',{name:'포스터 확대',exact:true}).click();await expect(dialog.locator('.zoom-controls')).toContainText('150%');
+   await dialog.getByRole('button',{name:'닫기',exact:true}).click();await expect(thumb).toBeFocused();
+  }
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+});
+
+test('part markers share schedule-number typography and replace only adjacent bottom borders',async({page})=>{
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/schedule');
+  expect(await page.locator('.schedule-item .schedule-number').allTextContents()).toEqual(['01','02','03','04','05','06']);
+  const expected=await page.locator('.schedule-item .schedule-number').first().evaluate(el=>{const s=getComputedStyle(el);return [s.fontFamily,s.fontSize,s.fontWeight,s.color,s.lineHeight]});
+  for(const [index,label,previous,next] of [[0,'1부','축사','낭독'],[1,'2부','낭독','대담']] as const){
+   const part=page.locator('.schedule-part').nth(index);await expect(part).toHaveText(label);
+   expect(await part.evaluate(el=>{const s=getComputedStyle(el);return [s.fontFamily,s.fontSize,s.fontWeight,s.color,s.lineHeight]})).toEqual(expected);
+   expect(await part.evaluate(el=>[el.previousElementSibling?.querySelector('h2')?.textContent,el.nextElementSibling?.querySelector('h2')?.textContent])).toEqual([previous,next]);
+   expect(await part.evaluate(el=>getComputedStyle(el.previousElementSibling!).borderBottomWidth)).toBe('0px');
+   expect(await part.evaluate(el=>getComputedStyle(el,'::before').borderTopWidth)).toBe('2px');
+   expect(await part.evaluate(el=>{const r=el.getBoundingClientRect(),s=el.querySelector('span')!.getBoundingClientRect();return Math.abs((r.left+r.right-s.left-s.right)/2)})).toBeLessThan(1);
+  }
+  for(const i of [0,1,4,5])await expect(page.locator('.schedule-item').nth(i)).toHaveCSS('border-bottom-width','1px');
  }
 });

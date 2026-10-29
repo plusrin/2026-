@@ -38,9 +38,9 @@ export function Gallery({ items, label, interactiveCards = false }: { items: Pos
   }
 
   return <>
-    <div className={`gallery-grid${interactiveCards ? ' scene-gallery' : ''}`}>
+    <div className={`gallery-grid${interactiveCards ? ` exhibition-gallery ${items[0]?.category === 'daily' ? 'daily-gallery' : 'scene-gallery'}` : ''}`}>
       {items.map(poster => {
-        const currentSide = mobile ? 'front' : cardSides[poster.id] ?? 'front';
+        const currentSide = mobile || !poster.back ? 'front' : cardSides[poster.id] ?? 'front';
         if (!interactiveCards) return (
           <button key={poster.id} className="poster-card" onClick={() => open(poster)}>
             <span className="poster-owner">{credit(poster)}</span>
@@ -51,16 +51,16 @@ export function Gallery({ items, label, interactiveCards = false }: { items: Pos
         return (
           <article key={poster.id} className="poster-card interactive-poster" data-poster-id={poster.id}>
             <header className="poster-card-heading">
-              <h3>{poster.title}</h3>
-              <p className="poster-owner">{poster.student}</p>
+              {poster.title && <h3>{poster.title}</h3>}
+              <p className="poster-owner">{credit(poster)}</p>
             </header>
-            <button className="poster-flip poster-thumbnail" aria-label={`${poster.title} ${credit(poster)} ${sideLabel(currentSide)}, ${mobile ? '확대 보기' : '눌러서 뒤집기'}`} aria-pressed={currentSide === 'back'} onClick={() => mobile ? open(poster) : flipCard(poster.id)}>
-              <img key={currentSide} src={poster[currentSide]} alt={`${poster.title} ${poster.student} ${sideLabel(currentSide)}`} loading="lazy" decoding="sync" />
-              <span className="poster-thumbnail-name">{poster.student}</span>
+            <button className="poster-flip poster-thumbnail" aria-label={`${poster.title ?? label} ${credit(poster)} ${poster.back ? sideLabel(currentSide) : ''}, ${mobile || !poster.back ? '확대 보기' : '눌러서 뒤집기'}`} aria-pressed={poster.back ? currentSide === 'back' : undefined} onClick={() => mobile || !poster.back ? open(poster) : flipCard(poster.id)}>
+              <img key={currentSide} src={poster[currentSide]} alt={`${poster.title ?? label} ${credit(poster)}${poster.back ? ` ${sideLabel(currentSide)}` : ''}`} loading="lazy" decoding="sync" />
+              <span className="poster-thumbnail-name">{credit(poster)}</span>
             </button>
             <div className="poster-card-controls">
-              <button className="button subtle" onClick={() => flipCard(poster.id)}>{currentSide === 'front' ? '뒷면 보기' : '앞면 보기'}</button>
-              <button className="button subtle" aria-label={`${poster.title} ${poster.student} ${sideLabel(currentSide)} 확대 보기`} onClick={() => open(poster, currentSide)}>확대 보기</button>
+              {poster.back && <button className="button subtle" onClick={() => flipCard(poster.id)}>{currentSide === 'front' ? '뒷면 보기' : '앞면 보기'}</button>}
+              <button className="button subtle" aria-label={`${poster.title ?? label} ${credit(poster)}${poster.back ? ` ${sideLabel(currentSide)}` : ''} 확대 보기`} onClick={() => open(poster, currentSide)}>확대 보기</button>
             </div>
           </article>
         );
@@ -70,7 +70,7 @@ export function Gallery({ items, label, interactiveCards = false }: { items: Pos
     {selected && <Modal wide title={selected.title ?? `${credit(selected)}의 포스터`} onClose={() => setSelected(null)}>
       <p className="poster-credit">{credit(selected)} · {label}</p>
       <div className={`poster-controls${interactiveCards ? ' scene-poster-controls' : ''}`}>
-        <div className="segmented">{(['front', 'back'] as const).map(value => <button key={value} aria-pressed={side === value} onClick={() => changeSide(value)}>{sideLabel(value)}</button>)}</div>
+        {selected.back && <div className="segmented">{(['front', 'back'] as const).map(value => <button key={value} aria-pressed={side === value} onClick={() => changeSide(value)}>{sideLabel(value)}</button>)}</div>}
         <div className="zoom-controls">
           <button aria-label="포스터 축소" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - .5))}><FontIcon kind="minus" /></button>
           <span aria-live="polite">{zoom * 100}%</span>
@@ -78,11 +78,11 @@ export function Gallery({ items, label, interactiveCards = false }: { items: Pos
         </div>
         <a href={selected[side]} target="_blank" rel="noopener noreferrer" className="text-link">원본 보기 ↗</a>
       </div>
-      <p className="quiet-note">이미지를 누르면 앞면과 뒷면이 전환됩니다. 확대 후 {interactiveCards ? '상하좌우' : '좌우'}로 스크롤할 수 있습니다.</p>
+      <p className="quiet-note">{selected.back && '이미지를 누르면 앞면과 뒷면이 전환됩니다. '}확대 후 {interactiveCards ? '상하좌우' : '좌우'}로 스크롤할 수 있습니다.</p>
       <div className={`poster-viewport${interactiveCards ? ' scene-poster-viewport' : ''}`} data-zoom={zoom}>
-        <button aria-label={`${sideLabel(side)} 이미지, 눌러서 뒤집기`} style={{ width: `${zoom * 100}%` }} onClick={() => changeSide(side === 'front' ? 'back' : 'front')}>
+        {selected.back ? <button aria-label={`${sideLabel(side)} 이미지, 눌러서 뒤집기`} style={{ width: `${zoom * 100}%` }} onClick={() => changeSide(side === 'front' ? 'back' : 'front')}>
           <img src={selected[side]} alt={`${selected.title ?? selected.student + ' 포스터'} ${sideLabel(side)}`} />
-        </button>
+        </button> : <div className="poster-image-surface" style={{ width: `${zoom * 100}%` }}><img src={selected.front} alt={`${credit(selected)}의 작품`} /></div>}
       </div>
       {selected.description && <p>{selected.description}</p>}
     </Modal>}

@@ -11,8 +11,8 @@ export function Schedule() {
     <div className="schedule-list">
       {schedule.map((item, index) => (
         <Fragment key={item.title}>
-        {(index === 3 || index === 4) && <div className="schedule-part" role="separator" aria-label={`${index - 2}부`}><span>{index - 2}부</span></div>}
-        <section className="schedule-item">
+        {(index === 3 || index === 4) && <div className="schedule-part schedule-number" role="separator" aria-label={`${index - 2}부`}><span>{index - 2}부</span></div>}
+        <section className={`schedule-item${index === 2 || index === 3 ? ' before-part' : ''}`}>
           <span className="schedule-number">{String(index + 1).padStart(2, '0')}</span>
           <div className="schedule-content">
             <h2>{item.title}</h2>

@@ -4,34 +4,47 @@
     "title": "개인화",
     "student": "안민성",
     "front": "/images/archive/개인화_안민성_앞면.jpg",
-    "back": "/images/archive/개인화_안민성_뒷면.jpg"
+    "back": "/images/archive/개인화_안민성_뒷면.jpg",
+    "className": "1학년 6반"
   },
   {
     "id": "scene-02",
     "title": "과잉일반화",
     "student": "김은송",
     "front": "/images/archive/과잉일반화_김은송_앞면.jpg",
-    "back": "/images/archive/과잉일반화_김은송_뒷면.jpg"
+    "back": "/images/archive/과잉일반화_김은송_뒷면.jpg",
+    "className": "2학년 1반"
   },
   {
     "id": "scene-03",
     "title": "선택적 추상화",
     "student": "박유나",
     "front": "/images/archive/선택적 추상화_박유나_앞면.jpg",
-    "back": "/images/archive/선택적 추상화_박유나_뒷면.jpg"
+    "back": "/images/archive/선택적 추상화_박유나_뒷면.jpg",
+    "className": "1학년 4반"
   },
   {
     "id": "scene-04",
     "title": "임의적추론",
     "student": "김경민",
     "front": "/images/archive/임의적추론_김경민_앞면.jpg",
-    "back": "/images/archive/임의적추론_김경민_뒷면.jpg"
+    "back": "/images/archive/임의적추론_김경민_뒷면.jpg",
+    "className": "2학년 5반"
   },
   {
     "id": "scene-05",
     "title": "파국화",
     "student": "김세연",
     "front": "/images/archive/김세연_파국화_앞면.jpg",
-    "back": "/images/archive/김세연_파국화_뒷면.jpg"
+    "back": "/images/archive/김세연_파국화_뒷면.jpg",
+    "className": "1학년 3반"
+  },
+  {
+    "id": "scene-06",
+    "title": "흑백논리",
+    "student": "백송현",
+    "className": "2학년 4반",
+    "front": "/images/archive/백송현_앞면.jpg",
+    "back": "/images/archive/흑백논리_백송현_뒷면.jpg"
   }
 ]
