@@ -360,3 +360,31 @@ test('part markers share schedule-number typography and replace only adjacent bo
   for(const i of [0,1,4,5])await expect(page.locator('.schedule-item').nth(i)).toHaveCSS('border-bottom-width','1px');
  }
 });
+
+test('siren font controls: source-exact text, reader sizing range, language persistence and wrapping',async({page})=>{
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/schedule');
+  const heading=page.locator('.schedule-content h2').nth(1);
+  const headingSize=await heading.evaluate(el=>getComputedStyle(el).fontSize);
+  await page.getByRole('button',{name:'원문 보기',exact:true}).click();
+  const body=page.locator('.siren-body'),smaller=page.getByRole('button',{name:'축하낭독 글자 작게',exact:true}),larger=page.getByRole('button',{name:'축하낭독 글자 크게',exact:true});
+  await expect(body).toHaveCSS('font-size','18px');await smaller.click();await expect(smaller).toBeDisabled();
+  for(const [language,label] of [['english','English'],['korean','한국어 해석']] as const){
+   await page.getByRole('button',{name:label,exact:true}).click();
+   await expect(body).toHaveCSS('font-size','16px');
+   const minHeight=(await body.boundingBox())!.height;
+   for(const size of [16,18,20,22,24,26]){
+    if(size>16)await larger.click();
+    await expect(body).toHaveCSS('font-size',`${size}px`);
+    expect(await body.textContent()).toBe(sirenParagraphs[language].join('\n\n'));
+    await expect(body).toHaveCSS('white-space','pre-wrap');await expect(body).toHaveCSS('font-family',/BookkMyungjo/);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await expect(heading).toHaveCSS('font-size',headingSize);
+   }
+   await expect(larger).toBeDisabled();expect((await body.boundingBox())!.height).toBeGreaterThan(minHeight);
+   await page.getByRole('button',{name:language==='english'?'한국어 해석':'English',exact:true}).click();await expect(body).toHaveCSS('font-size','26px');
+   for(let i=0;i<5;i++)await smaller.click();await expect(body).toHaveCSS('font-size','16px');await expect(smaller).toBeDisabled();
+  }
+  await page.getByRole('button',{name:'원문 닫기',exact:true}).click();await page.getByRole('button',{name:'원문 보기',exact:true}).click();await expect(body).toHaveCSS('font-size','16px');
+ }
+});

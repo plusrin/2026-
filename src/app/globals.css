@@ -364,3 +364,5 @@ body { background: var(--deep); color: var(--ivory); }
 .schedule-item.before-part { border-bottom: 0; }
 .poster-thumbnail-name { overflow-wrap: anywhere; word-break: keep-all; }
 .poster-image-surface { max-width: none; }
+.song-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.song-panel .siren-body { word-break: normal; overflow-wrap: anywhere; }
