@@ -357,3 +357,7 @@ body { background: var(--deep); color: var(--ivory); }
 .source-horizontal-bar { display: inline-block; position: relative; width: 1em; height: 1em; vertical-align: -.125em; }
 .source-bar-text { font-size: 0; }
 .source-horizontal-bar::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: .055em solid currentColor; }
+
+/* Unnumbered part markers belong between the existing schedule entries. */
+.schedule-part { display: flex; align-items: center; gap: 16px; margin: 24px 0; color: var(--gold); font-family: var(--font-bookk); font-size: 13px; line-height: 1.7; }
+.schedule-part::before, .schedule-part::after { content: ''; flex: 1; border-top: 1px solid var(--line); }

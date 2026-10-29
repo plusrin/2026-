@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import { schedule, siren } from '@/data/schedule';
 
@@ -10,7 +10,9 @@ export function Schedule() {
   return (
     <div className="schedule-list">
       {schedule.map((item, index) => (
-        <section className="schedule-item" key={item.title}>
+        <Fragment key={item.title}>
+        {(index === 3 || index === 4) && <div className="schedule-part" role="separator" aria-label={`${index - 2}부`}><span>{index - 2}부</span></div>}
+        <section className="schedule-item">
           <span className="schedule-number">{String(index + 1).padStart(2, '0')}</span>
           <div className="schedule-content">
             <h2>{item.title}</h2>
@@ -36,6 +38,7 @@ export function Schedule() {
             {index === 3 && <Link href="/readings" className="schedule-action reading-action">낭독 원고 보기</Link>}
           </div>
         </section>
+        </Fragment>
       ))}
     </div>
   );
